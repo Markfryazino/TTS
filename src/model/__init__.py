@@ -1,0 +1,1 @@
+from src.model.FastSpeech2 import FastSpeech2
