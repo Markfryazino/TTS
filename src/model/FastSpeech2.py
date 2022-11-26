@@ -8,7 +8,7 @@ from src.model.VarianceAdaptor import VarianceAdaptor
 
 def get_non_pad_mask(seq, pad_token):
     assert seq.dim() == 2
-    return seq.ne(pad_token).type(torch.float).unsqueeze(-1)
+    return seq.ne(pad_token).type(torch.float)
 
 
 def get_attn_key_pad_mask(seq_k, seq_q, pad_token):
@@ -58,7 +58,7 @@ class Encoder(nn.Module):
             model_config.encoder_dim,
             model_config.encoder_conv1d_filter_size,
             model_config.encoder_head,
-            dropout=model_config.dropout,
+            dropout_prob=model_config.dropout,
             conv_kernel_sizes=model_config.fft_conv1d_kernels
         ) for _ in range(n_layers)])
 
@@ -74,10 +74,9 @@ class Encoder(nn.Module):
         for enc_layer in self.layer_stack:
             enc_output = enc_layer(
                 enc_output,
-                non_pad_mask=non_pad_mask,
-                slf_attn_mask=slf_attn_mask)
+                mask=non_pad_mask)
 
-        return enc_output, non_pad_mask
+        return enc_output
 
 
 class Decoder(nn.Module):
@@ -103,9 +102,8 @@ class Decoder(nn.Module):
             model_config.encoder_dim,
             model_config.encoder_conv1d_filter_size,
             model_config.encoder_head,
-            model_config.encoder_dim // model_config.encoder_head,
-            model_config.encoder_dim // model_config.encoder_head,
-            dropout_prob=model_config.dropout
+            dropout_prob=model_config.dropout,
+            conv_kernel_sizes=model_config.fft_conv1d_kernels
         ) for _ in range(n_layers)])
 
     def forward(self, enc_seq, enc_pos, return_attns=False):
@@ -120,8 +118,7 @@ class Decoder(nn.Module):
         for dec_layer in self.layer_stack:
             dec_output = dec_layer(
                 dec_output,
-                non_pad_mask=non_pad_mask,
-                slf_attn_mask=slf_attn_mask)
+                mask=non_pad_mask)
 
         return dec_output
 
@@ -155,6 +152,7 @@ class FastSpeech2(nn.Module):
             )
             output = self.decoder(output, mel_pos)
             output = self.mask_tensor(output, mel_pos, mel_max_length)
+            output = self.mel_linear(output)
             return output, duration_predictor_output
         else:
             output, mel_pos = self.variance_adapter(
@@ -162,4 +160,5 @@ class FastSpeech2(nn.Module):
                 pitch_alpha, energy_alpha, mel_max_length
             )
             output = self.decoder(output, mel_pos)
+            output = self.mel_linear(output)
             return output

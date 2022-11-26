@@ -14,6 +14,17 @@ from src.training.loss import FastSpeechLoss
 
 
 def prepare(model_config: FastSpeech2Config, train_config: TrainConfig, mel_config: MelSpectrogramConfig):
+    model = FastSpeech2(model_config, mel_config)
+    model = model.to(train_config.device)
+
+    fastspeech_loss = FastSpeechLoss()
+
+    optimizer = torch.optim.AdamW(
+        model.parameters(),
+        lr=train_config.learning_rate,
+        betas=(0.9, 0.98),
+        eps=1e-9)
+
     buffer = get_data_to_buffer(TrainConfig())
     dataset = BufferDataset(buffer)
 
@@ -25,17 +36,6 @@ def prepare(model_config: FastSpeech2Config, train_config: TrainConfig, mel_conf
         drop_last=True,
         num_workers=0
     )
-
-    model = FastSpeech2(model_config, mel_config)
-    model = model.to(train_config.device)
-
-    fastspeech_loss = FastSpeechLoss()
-
-    optimizer = torch.optim.AdamW(
-        model.parameters(),
-        lr=train_config.learning_rate,
-        betas=(0.9, 0.98),
-        eps=1e-9)
 
     scheduler = OneCycleLR(optimizer, **{
         "steps_per_epoch": len(train_loader) * train_config.batch_expand_size,
@@ -54,7 +54,8 @@ def train(train_config: TrainConfig, model: FastSpeech2, train_loader: torch.uti
     tqdm_bar = tqdm(total=train_config.epochs * len(train_loader) * train_config.batch_expand_size)
 
     wandb.init(
-        project=f"broccoliman/{train_config.wandb_project}"
+       project=train_config.wandb_project,
+       entity=train_config.wandb_entity
     )
 
     for epoch in range(train_config.epochs):
@@ -92,9 +93,9 @@ def train(train_config: TrainConfig, model: FastSpeech2, train_loader: torch.uti
                 d_l = duration_loss.detach().cpu().numpy()
 
                 wandb.log({
-                    "duration_loss": d_l,
-                    "mel_loss": m_l,
-                    "total_loss": t_l
+                   "duration_loss": d_l,
+                   "mel_loss": m_l,
+                   "total_loss": t_l
                 })
 
                 # Backward

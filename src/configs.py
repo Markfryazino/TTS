@@ -48,11 +48,11 @@ class TrainConfig:
     data_path = './data/train.txt'
     
     wandb_project = 'TTS'
+    wandb_entity = 'broccoliman'
     
     text_cleaners = ['english_cleaners']
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    device = 'cuda:0'
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     batch_size = 16
     epochs = 2000

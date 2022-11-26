@@ -1,5 +1,5 @@
 from src.xcmyz_utils.text import text_to_sequence
-from tqdm.auto import tqdm
+from tqdm import tqdm
 
 import torch
 import torch.nn.functional as F

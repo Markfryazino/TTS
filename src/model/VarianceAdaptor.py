@@ -110,8 +110,10 @@ class LengthRegulator(nn.Module):
         return output, mel_pos
 
 
-class VarianceAdaptor(torch.nn.Module):
-    def _init__(self, model_config):
+class VarianceAdaptor(nn.Module):
+    def __init__(self, model_config):
+        super(VarianceAdaptor, self).__init__()
+
         self.length_regulator = LengthRegulator(model_config)
         # здесь должны быть питч предиктор и енержи предиктор
     def forward(self, x, target, length_alpha=1.0, pitch_alpha=1.0, energy_alpha=1.0, mel_max_length=None):
