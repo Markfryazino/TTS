@@ -1,0 +1,4 @@
+text
+unidecode
+inflect
+wandb
