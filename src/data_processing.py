@@ -1,4 +1,6 @@
 from src.xcmyz_utils.text import text_to_sequence
+
+
 from tqdm import tqdm
 
 import torch
@@ -104,8 +106,13 @@ def get_data_to_buffer(train_config):
         duration = torch.from_numpy(duration)
         mel_gt_target = torch.from_numpy(mel_gt_target)
 
+        pitch_name = os.path.join(train_config.pitch_path, f"{i}.npy")
+        energy_name = os.path.join(train_config.energy_path, f"{i}.npy")
+        pitch = torch.from_numpy(np.load(pitch_name))
+        energy = torch.from_numpy(np.load(energy_name))
+
         buffer.append({"text": character, "duration": duration,
-                       "mel_target": mel_gt_target})
+                       "mel_target": mel_gt_target, "pitch": pitch, "energy": energy})
 
     end = time.perf_counter()
     print("cost {:.2f}s to load all data into buffer.".format(end-start))
@@ -129,6 +136,8 @@ def reprocess_tensor(batch, cut_list):
     texts = [batch[ind]["text"] for ind in cut_list]
     mel_targets = [batch[ind]["mel_target"] for ind in cut_list]
     durations = [batch[ind]["duration"] for ind in cut_list]
+    pitchs = [batch[ind]["pitch"] for ind in cut_list]
+    energys = [batch[ind]["energy"] for ind in cut_list]
 
     length_text = np.array([])
     for text in texts:
@@ -154,11 +163,15 @@ def reprocess_tensor(batch, cut_list):
 
     texts = pad_1D_tensor(texts)
     durations = pad_1D_tensor(durations)
+    pitchs = pad_1D_tensor(pitchs)
+    energys = pad_1D_tensor(energys)
     mel_targets = pad_2D_tensor(mel_targets)
 
     out = {"text": texts,
            "mel_target": mel_targets,
            "duration": durations,
+           "pitch": pitchs,
+           "energy": energys,
            "mel_pos": mel_pos,
            "src_pos": src_pos,
            "mel_max_len": max_mel_len}

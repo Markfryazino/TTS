@@ -8,6 +8,9 @@ RUN pip install sox && conda install torchaudio==0.11.0 -c pytorch && conda inst
 COPY requirements.txt ./
 RUN pip install -r requirements.txt
 
+# Install wget
+RUN apt-get update && apt-get install wget && apt-get install unzip
+
 # Copy the contents of repository
 COPY . .
 

@@ -1,4 +1,4 @@
-import audio.hparams_audio
-import audio.tools
-import audio.stft
-import audio.audio_processing
+import src.xcmyz_utils.audio.hparams_audio
+import src.xcmyz_utils.audio.tools
+import src.xcmyz_utils.audio.stft
+import src.xcmyz_utils.audio.audio_processing

@@ -70,6 +70,50 @@ class BaseFeaturePredictor(nn.Module):
             out = out.unsqueeze(0)
         return out
 
+
+class PitchRegulator(nn.Module):
+    def __init__(self, model_config):
+        super(PitchRegulator, self).__init__()
+        self.pitch_predictor = BaseFeaturePredictor(model_config) 
+        self.min_log_pitch = torch.log1p(torch.tensor(model_config.min_pitch))
+        self.max_log_pitch = torch.log1p(torch.tensor(model_config.max_pitch))
+
+        self.boundaries = torch.linspace(self.min_log_pitch, self.max_log_pitch, model_config.pitch_vocab)
+        self.embedding = nn.Embedding(model_config.pitch_vocab, model_config.encoder_dim)
+
+    def forward(self, x, alpha=1.0, target=None):
+        pitch_predictor_output = self.pitch_predictor(x)
+        if target is not None:
+            log_pitch = torch.log1p(target)
+        else:
+            log_pitch = torch.log1p((torch.exp(pitch_predictor_output) - 1) * alpha)
+        log_pitch = torch.clamp(log_pitch, self.min_log_pitch, self.max_log_pitch)
+        emb_idxs = torch.bucketize(log_pitch, self.boundaries.to(log_pitch.device))
+        embeddings = self.embedding(emb_idxs)
+        return x + embeddings, pitch_predictor_output
+
+
+class EnergyRegulator(nn.Module):
+    def __init__(self, model_config):
+        super(EnergyRegulator, self).__init__()
+        self.energy_predictor = BaseFeaturePredictor(model_config) 
+        self.min_energy = model_config.min_energy
+        self.max_energy = model_config.max_energy
+
+        self.boundaries = torch.linspace(self.min_energy, self.max_energy, model_config.energy_vocab)
+        self.embedding = nn.Embedding(model_config.energy_vocab, model_config.encoder_dim)
+
+    def forward(self, x, alpha=1.0, target=None):
+        energy_predictor_output = self.energy_predictor(x)
+        if target is not None:
+            energy = target
+        else:
+            energy = energy_predictor_output * alpha
+        energy = torch.clamp(energy, self.min_energy, self.max_energy)
+        emb_idxs = torch.bucketize(energy, self.boundaries.to(energy.device))
+        embeddings = self.embedding(emb_idxs)
+        return x + embeddings, energy_predictor_output
+
     
 class LengthRegulator(nn.Module):
     """ Length Regulator """
@@ -77,7 +121,6 @@ class LengthRegulator(nn.Module):
     def __init__(self, model_config):
         super(LengthRegulator, self).__init__()
         self.duration_predictor = BaseFeaturePredictor(model_config)
-        self.relu = nn.ReLU()
 
     def LR(self, x, duration_predictor_output, mel_max_length=None):
         expand_max_len = torch.max(
@@ -96,13 +139,13 @@ class LengthRegulator(nn.Module):
         return output
 
     def forward(self, x, alpha=1.0, target=None, mel_max_length=None):
-        duration_predictor_output = self.relu(self.duration_predictor(x))
+        duration_predictor_output = self.duration_predictor(x)
 
         if target is not None:
             output = self.LR(x, target, mel_max_length)
             return output, duration_predictor_output
         else:
-            duration_predictor_output = (duration_predictor_output * alpha + 0.5).int()
+            duration_predictor_output = ((torch.exp(duration_predictor_output) - 1) * alpha + 0.5).int()
             output = self.LR(x, duration_predictor_output, mel_max_length)
             mel_pos = torch.stack([
                 torch.Tensor([i + 1 for i in range(output.size(1))])
@@ -115,7 +158,12 @@ class VarianceAdaptor(nn.Module):
         super(VarianceAdaptor, self).__init__()
 
         self.length_regulator = LengthRegulator(model_config)
-        # здесь должны быть питч предиктор и енержи предиктор
-    def forward(self, x, target, length_alpha=1.0, pitch_alpha=1.0, energy_alpha=1.0, mel_max_length=None):
-        x, duration_predictor_output = self.length_regulator(x, length_alpha, target, mel_max_length)
-        return x, duration_predictor_output
+        self.pitch_regulator = PitchRegulator(model_config)
+        self.energy_regulator = EnergyRegulator(model_config)
+
+    def forward(self, x, length_target, pitch_target, energy_target, length_alpha=1.0, 
+                pitch_alpha=1.0, energy_alpha=1.0, mel_max_length=None):
+        x, duration_predictor_output = self.length_regulator(x, length_alpha, length_target, mel_max_length)
+        x, pitch_prediction_output = self.pitch_regulator(x, pitch_alpha, pitch_target)
+        x, energy_prediction_output = self.energy_regulator(x, energy_alpha, energy_target)
+        return x, duration_predictor_output, pitch_prediction_output, energy_prediction_output

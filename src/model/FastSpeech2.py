@@ -142,22 +142,22 @@ class FastSpeech2(nn.Module):
         return mel_output.masked_fill(mask, 0.)
 
     def forward(self, src_seq, src_pos, mel_pos=None, mel_max_length=None, length_target=None, 
-                length_alpha=1.0, pitch_alpha=1.0, energy_alpha=1.0):
+                pitch_target=None, energy_target=None, length_alpha=1.0, pitch_alpha=1.0, energy_alpha=1.0):
         x = self.encoder(src_seq, src_pos)
 
         if self.training:
-            output, duration_predictor_output = self.variance_adapter(
-                x, length_target, length_alpha, 
-                pitch_alpha, energy_alpha, mel_max_length
+            output, duration_predictor_output, pitch_prediction_output, energy_prediction_output = self.variance_adapter(
+                x, length_target, pitch_target, energy_target,
+                length_alpha, pitch_alpha, energy_alpha, mel_max_length
             )
             output = self.decoder(output, mel_pos)
             output = self.mask_tensor(output, mel_pos, mel_max_length)
             output = self.mel_linear(output)
-            return output, duration_predictor_output
+            return output, duration_predictor_output, pitch_prediction_output, energy_prediction_output
         else:
-            output, mel_pos = self.variance_adapter(
-                x, length_target, length_alpha, 
-                pitch_alpha, energy_alpha, mel_max_length
+            output, mel_pos, pitch_prediction_output, energy_prediction_output = self.variance_adapter(
+                x, length_target, pitch_target, energy_target, 
+                length_alpha, pitch_alpha, energy_alpha, mel_max_length
             )
             output = self.decoder(output, mel_pos)
             output = self.mel_linear(output)

@@ -1,4 +1,9 @@
-text
+numpy==1.23.5
+numba==0.56.4
 unidecode
 inflect
 wandb
+ipykernel
+jupyter
+gdown
+pyworld

@@ -23,5 +23,5 @@ rm mel.tar.gz
 #download alignments
 wget https://github.com/xcmyz/FastSpeech/raw/master/alignments.zip
 unzip alignments.zip
-mv alignmets/ data/
+mv alignments/ data/
 rm alignments.zip
