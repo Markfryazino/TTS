@@ -7,3 +7,4 @@ ipykernel
 jupyter
 gdown
 pyworld
+wget

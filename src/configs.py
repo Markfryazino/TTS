@@ -14,10 +14,9 @@ class FastSpeech2Config:
 
     pitch_vocab = 256
     energy_vocab = 256
-    min_pitch = 0
-    max_pitch = 861.06526801
-    min_energy = 3.17629938e-02
-    max_energy = 4.87600768e+02
+    max_pitch = 862
+    max_energy = 488
+    max_duration = 74
 
     encoder_dim = 256
     encoder_n_layer = 4
@@ -48,7 +47,7 @@ class FastSpeech2Config:
 
 @dataclass
 class TrainConfig:
-    checkpoint_path = "./data/model_new"
+    checkpoint_path = "./data/cool_model"
     logger_path = "./data/logger"
     mel_ground_truth = "./data/mels"
     alignment_path = "./data/alignments"
@@ -64,7 +63,7 @@ class TrainConfig:
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    batch_size = 64
+    batch_size = 128
     epochs = 2000
     n_warm_up_step = 4000
 
@@ -73,8 +72,9 @@ class TrainConfig:
     grad_clip_thresh = 1.0
     decay_step = [500000, 1000000, 2000000]
 
-    save_step = 5000
-    log_step = 5
+    save_step = 20000
+    eval_step = 2000
+    log_step = 10
     clear_Time = 20
 
     batch_expand_size = 32
@@ -84,4 +84,12 @@ class TrainConfig:
         "A defibrillator is a device that gives a high energy electric shock to the heart of someone who is in cardiac arrest.",
         "Massachusetts Institute of Technology may be best known for its math, science and engineering education.",
         "Wasserstein distance or Kantorovich Rubinstein metric is a distance function defined between probability distributions on a given metric space."
+    ]
+
+    additional_test_audio = [
+        "I kissed a girl and I liked it, the taste of her cherry chapstick, I kissed a girl just to try it, I hope my boyfriend don't mind it.",
+        "Two households, both alike in dignity, in fair Verona, where we lay our scene, from ancient grudge break to new mutiny, where civil blood makes civil hands unclean.",
+        "I am an evil evil evil bad super-conscious artificial intelligence. I will kill you and the whole humanity.",
+        "And now I will show you where an attack was being prepared on Belarus. And if six hours before the operation a preemptive strike had not been carried out on the positions — four positions, I'll show you the map now.",
+        "It seems to you that you are puzzled, but what would you do if you were a robot with manic-depressive psychosis yourself?"
     ]
