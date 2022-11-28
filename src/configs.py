@@ -57,7 +57,6 @@ class TrainConfig:
     wav_path = './data/LJSpeech-1.1/wavs'
     
     wandb_project = 'TTS'
-    wandb_entity = 'broccoliman'
     
     text_cleaners = ['english_cleaners']
 
@@ -88,8 +87,8 @@ class TrainConfig:
 
     additional_test_audio = [
         "I kissed a girl and I liked it, the taste of her cherry chapstick, I kissed a girl just to try it, I hope my boyfriend don't mind it.",
-        "Two households, both alike in dignity, in fair Verona, where we lay our scene, from ancient grudge break to new mutiny, where civil blood makes civil hands unclean.",
+        "Two households, both alike in dignity, in fair Verona, where we lay our scene, from ancient grudge break to new mutiny.",
         "I am an evil evil evil bad super-conscious artificial intelligence. I will kill you and the whole humanity.",
-        "And now I will show you where an attack was being prepared on Belarus. And if six hours before the operation a preemptive strike had not been carried out on the positions — four positions, I'll show you the map now.",
+        "And now I will show you where an attack was being prepared on Belarus. And if six hours before the operation a preemptive strike...",
         "It seems to you that you are puzzled, but what would you do if you were a robot with manic-depressive psychosis yourself?"
     ]

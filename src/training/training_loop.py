@@ -30,7 +30,7 @@ def log_audio(model, wave_glow, prepared_texts, step, device="cuda:0", prefix=""
                     audio, sr = synthesis(model, wave_glow, sequence, src_pos, "test.wav", device=device, **settings)
                     wandb.log({
                         f"{prefix}step-{step}-text-{i}-settings-{settings}": wandb.Audio(
-                            audio, sr, 
+                            audio.astype("int16"), sr, 
                             caption=f"Step: {step}. Settings: {settings}. Text: {raw_text}"
                         )
                     },
@@ -94,7 +94,6 @@ def train(train_config: TrainConfig, model: FastSpeech2, train_loader: torch.uti
 
     wandb.init(
        project=train_config.wandb_project,
-       entity=train_config.wandb_entity
     )
 
     t_l = m_l = d_l = p_l = e_l = 0.
@@ -186,7 +185,7 @@ def train(train_config: TrainConfig, model: FastSpeech2, train_loader: torch.uti
 
     torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict(
     )}, os.path.join(train_config.checkpoint_path, 'final_checkpoint.pth.tar' % current_step))
-    wandb.save(os.path.join(train_config.checkpoint_path, 'checkpoint_final.pth.tar' % current_step))
+    wandb.save(os.path.join(train_config.checkpoint_path, 'final_checkpoint.pth.tar' % current_step))
     print("save model at step %d ..." % current_step)
 
     return model
