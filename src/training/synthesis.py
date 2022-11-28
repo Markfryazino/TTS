@@ -23,5 +23,5 @@ def prepare_texts_for_synthesis(texts, text_cleaners, device="cuda:0"):
 def synthesis(fs_model, wv_model, sequence, src_pos, out_path, length_alpha=1.0, pitch_alpha=1.0, energy_alpha=1.0, device="cuda:0"):
     with torch.no_grad():
         mel = fs_model.forward(sequence, src_pos, length_alpha=length_alpha, pitch_alpha=pitch_alpha, energy_alpha=energy_alpha)
-    mel = mel.contiguous().transpose(1, 2)
+    mel = mel.contiguous().transpose(1, 2).to(device)
     return waveglow.inference.inference(mel, wv_model, out_path)
